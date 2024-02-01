@@ -2,6 +2,7 @@ package config
 
 import (
 	"backend/internal/domain/member"
+	"backend/internal/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -28,7 +29,12 @@ func SetRouter() *gin.Engine {
 }
 
 func setMemberRoute(router *gin.Engine) {
-	router.GET("/member", member.GetAllMembers)
+	router.GET("/member", middleware.AuthMiddleware([]string{"ROLE_ADMIN"}), member.GetAllMembers)
+	router.GET("/member/details", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}), member.GetMemberDetail)
+	router.POST("/member/login", member.Login)
+	router.PATCH("/member/details", member.UpdateMember)
+	router.DELETE("/member", member.DeleteMember)
+	router.POST("/address", member.ConnectAddress)
 }
 
 func setNotificationRoute(router *gin.Engine) {
