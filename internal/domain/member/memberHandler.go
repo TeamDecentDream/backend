@@ -2,22 +2,24 @@ package member
 
 import (
 	"backend/internal/models"
+	"backend/internal/utils/jwt"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
-func GetAllMembers(c *gin.Context) {
+func GetAllMembersHandler(c *gin.Context) {
 
 }
 
-func GetMemberDetail(c *gin.Context) {
+func GetMemberDetailHandler(c *gin.Context) {
 
 }
 
-func Login(c *gin.Context) {
+func LoginHandler(c *gin.Context) {
 	var credential models.Credential
 	err := c.BindJSON(&credential)
 	if err != nil {
@@ -25,18 +27,45 @@ func Login(c *gin.Context) {
 		return
 	}
 	kakaoHandler(&credential, c)
+	c.JSON(http.StatusOK, gin.H{})
 }
 
-func UpdateMember(c *gin.Context) {
-
+func DeleteMemberHandler(c *gin.Context) {
+	token := c.GetHeader("Authorization")
+	id, _, _, _, err := jwt.AccessTokenVerifier(token)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "유효하지 않은 형식입니다."})
+		return
+	}
+	err = DeleteMember(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{})
 }
 
-func DeleteMember(c *gin.Context) {
+func ConnectAddressHandler(c *gin.Context) {
+	token := c.GetHeader("Authorization")
+	id, _, _, _, err := jwt.AccessTokenVerifier(token)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "유효하지 않은 형식입니다."})
+		return
+	}
+	var input map[string]interface{}
+	err = c.BindJSON(&input)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "유효하지 않은 형식입니다."})
+		return
+	}
 
-}
-
-func ConnectAddress(c *gin.Context) {
-
+	addr := input["address"].(string)
+	token, err = SaveAddress(id, addr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"addrToken": token})
 }
 
 func kakaoHandler(credential *models.Credential, c *gin.Context) {
@@ -90,5 +119,27 @@ func kakaoHandler(credential *models.Credential, c *gin.Context) {
 
 	log.Println("Kakao Member 응답:", userInfo.Properties.Nickname)
 	log.Println("Kakao Member 응답:", userInfo.KakaoAccount.Email)
-	
+
+	result, err := FindByNameAndEmail(userInfo.Properties.Nickname, userInfo.KakaoAccount.Email)
+	if err != nil {
+		if strings.Contains(err.Error(), "member not found") {
+			var newMember models.Member
+			newMember.Name = userInfo.Properties.Nickname
+			newMember.Email = userInfo.KakaoAccount.Email
+			err := InsertMember(&newMember)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+	accessToken, err := jwt.AccessTokenProvider(&result)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"accessToken": accessToken})
 }
