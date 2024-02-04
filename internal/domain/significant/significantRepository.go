@@ -3,6 +3,8 @@ package significant
 import (
 	"backend/internal/db"
 	"backend/internal/models"
+	"database/sql"
+	"fmt"
 	"reflect"
 )
 
@@ -57,4 +59,53 @@ func getSignificants(page int) ([]models.Significant, error) {
 		return nil, err
 	}
 	return significants, nil
+}
+
+func findSignificantById(id int) (models.Significant, error) {
+	significant := models.Significant{}
+	s := reflect.ValueOf(&significant).Elem()
+	numCols := s.NumField()
+	columns := make([]interface{}, numCols)
+	for i := 0; i < numCols; i++ {
+		field := s.Field(i)
+		columns[i] = field.Addr().Interface()
+	}
+
+	query := "SELECT * FROM significant WHERE id=?"
+	err := db.MyDb.QueryRow(query, id).Scan(columns...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return significant, fmt.Errorf("member not found")
+		}
+		return significant, err
+	}
+	return significant, nil
+}
+
+func updateSignificant(updateInfo *models.Significant, id int) error {
+	query := "UPDATE significant SET title=?, contents=?, update_date=NOW(), author_id=? WHERE id=?"
+
+	_, err := db.MyDb.Exec(query, updateInfo.Title, updateInfo.Contents, id)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+func DeleteSignificant(sid int, id int) error {
+	query := "Delete from significant where id=? AND author_id=?"
+	_, err := db.MyDb.Exec(query, sid, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteSignificantByAdmin(sid int) error {
+	query := "Delete from significant where id=?"
+	_, err := db.MyDb.Exec(query, sid)
+	if err != nil {
+		return err
+	}
+	return nil
 }
