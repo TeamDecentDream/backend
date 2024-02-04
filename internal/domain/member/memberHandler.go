@@ -8,15 +8,30 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
 func GetAllMembersHandler(c *gin.Context) {
-
+	page := c.Query("page")
+	_page, _ := strconv.Atoi(page)
+	members, err := findAllMembers(_page)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, members)
 }
 
 func GetMemberDetailHandler(c *gin.Context) {
-
+	token := c.GetHeader("Authorization")
+	id, _, _, _, err := jwt.AccessTokenVerifier(token)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	member, err := findMemberById(id)
+	c.JSON(http.StatusOK, member)
 }
 
 func LoginHandler(c *gin.Context) {

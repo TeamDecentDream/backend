@@ -14,7 +14,7 @@ func SetRouter() *gin.Engine {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "https://gryu-dev.com", "http://gryu-dev.com"},
+		AllowOrigins:     []string{"http://localhost:3000"},
 		AllowMethods:     []string{"PUT", "PATCH", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length", "Authorization"},
@@ -47,9 +47,9 @@ func setNotificationRoute(router *gin.Engine) {
 }
 
 func setSignificantRoute(router *gin.Engine) {
-	router.GET("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}))
-	router.GET("/significant/count", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}))
+	router.GET("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}), significant.GetSignificantHandler)
+	router.GET("/significant/count", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}), significant.GetSignificantCountHandler)
 	router.POST("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}), significant.PostSignificantHandler)
-	router.PATCH("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}))
-	router.DELETE("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}))
+	router.PATCH("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}), significant.PatchSignificantHandler)
+	router.DELETE("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}), significant.DeleteSignificantHandler)
 }

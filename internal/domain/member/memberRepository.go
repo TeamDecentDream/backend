@@ -7,18 +7,28 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"reflect"
 )
 
 func FindByNameAndEmail(name string, email string) (models.Member, error) {
 	var result models.Member
+	s := reflect.ValueOf(&result).Elem()
+	numCols := s.NumField()
+	columns := make([]interface{}, numCols)
+	for i := 0; i < numCols; i++ {
+		field := s.Field(i)
+		columns[i] = field.Addr().Interface()
+	}
+
 	query := "SELECT * FROM member WHERE name=? AND email=?"
-	err := db.MyDb.QueryRow(query, name, email).Scan(&result)
+	err := db.MyDb.QueryRow(query, name, email).Scan(columns...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return result, fmt.Errorf("member not found")
 		}
 		return result, err
 	}
+
 	log.Println(result.ID, result.Name, result.Email, result.Address, result.RegDate)
 	return result, nil
 }
@@ -80,4 +90,59 @@ func DeleteMember(id int) error {
 		return err
 	}
 	return nil
+}
+
+func findAllMembers(page int) ([]models.Member, error) {
+	pageSize := 20
+	offset := (page - 1) * pageSize
+
+	query := "SELECT * FROM member LIMIT ? OFFSET ?"
+	rows, err := db.MyDb.Query(query, pageSize, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var members []models.Member
+
+	for rows.Next() {
+		member := models.Member{}
+		s := reflect.ValueOf(&member).Elem()
+		numCols := s.NumField()
+		columns := make([]interface{}, numCols)
+		for i := 0; i < numCols; i++ {
+			field := s.Field(i)
+			columns[i] = field.Addr().Interface()
+		}
+		err := rows.Scan(columns...)
+		if err != nil {
+			return nil, err
+		}
+		members = append(members, member)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return members, nil
+}
+
+func findMemberById(id int) (models.Member, error) {
+	member := models.Member{}
+	s := reflect.ValueOf(&member).Elem()
+	numCols := s.NumField()
+	columns := make([]interface{}, numCols)
+	for i := 0; i < numCols; i++ {
+		field := s.Field(i)
+		columns[i] = field.Addr().Interface()
+	}
+
+	query := "SELECT * FROM member WHERE id=?"
+	err := db.MyDb.QueryRow(query, id).Scan(columns...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return member, fmt.Errorf("member not found")
+		}
+		return member, err
+	}
+	return member, nil
 }
