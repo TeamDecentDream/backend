@@ -12,21 +12,20 @@ import (
 
 func FindByNameAndEmail(name string, email string) (models.Member, error) {
 	var result models.Member
-	s := reflect.ValueOf(&result).Elem()
-	numCols := s.NumField()
-	columns := make([]interface{}, numCols)
-	for i := 0; i < numCols; i++ {
-		field := s.Field(i)
-		columns[i] = field.Addr().Interface()
-	}
 
 	query := "SELECT * FROM member WHERE name=? AND email=?"
-	err := db.MyDb.QueryRow(query, name, email).Scan(columns...)
+	var address sql.NullString
+	err := db.MyDb.QueryRow(query, name, email).Scan(&result.ID, &result.Name, &result.Email, &address, &result.RegDate)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return result, fmt.Errorf("member not found")
 		}
 		return result, err
+	}
+	if address.Valid {
+		result.Address = address.String
+	} else {
+		result.Address = ""
 	}
 
 	log.Println(result.ID, result.Name, result.Email, result.Address, result.RegDate)
