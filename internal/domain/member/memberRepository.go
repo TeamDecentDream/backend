@@ -13,22 +13,45 @@ import (
 func FindByNameAndEmail(name string, email string) (models.Member, error) {
 	var result models.Member
 
-	query := "SELECT * FROM member WHERE name=? AND email=?"
-	var address sql.NullString
-	err := db.MyDb.QueryRow(query, name, email).Scan(&result.ID, &result.Name, &result.Email, &address, &result.RegDate)
+	query := "SELECT * FROM member left outer join nextfarm.authorities a on member.id = a.member_id WHERE name=? AND email=?"
+
+	rows, err := db.MyDb.Query(query, name, email)
+	if err != nil {
+		return result, err
+	}
+	defer rows.Close()
+
+	authorities := make([]models.Authority, 0)
+	for rows.Next() {
+		var memberID int
+		var role sql.NullString
+		var address sql.NullString
+		err := rows.Scan(&result.ID, &result.Name, &result.Email, &address, &result.RegDate, &memberID, &role)
+		if err != nil {
+			return result, err
+		}
+
+		if address.Valid && result.Address != "" {
+			result.Address = address.String
+		}
+
+		if role.Valid {
+			log.Println(role.String)
+			authority := models.Authority{MemberId: memberID, Role: role.String}
+			authorities = append(authorities, authority)
+		}
+	}
+
+	result.Authorities = authorities
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return result, fmt.Errorf("member not found")
 		}
 		return result, err
 	}
-	if address.Valid {
-		result.Address = address.String
-	} else {
-		result.Address = ""
-	}
 
-	log.Println(result.ID, result.Name, result.Email, result.Address, result.RegDate)
+	log.Println(result.ID, result.Name, result.Email, result.Address, result.RegDate, result.Authorities)
 	return result, nil
 }
 
