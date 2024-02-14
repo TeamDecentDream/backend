@@ -4,6 +4,7 @@ import (
 	"backend/internal/models"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"log"
 	"time"
 )
 
@@ -35,8 +36,10 @@ func AccessTokenVerifier(accessToken string) (int, string, string, []models.Auth
 		return secretKey, nil
 	})
 	if err != nil {
+		log.Println(err.Error())
 		return -1, "", "", nil, err
 	}
+
 	if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 	} else {
 		return -1, "", "", nil, fmt.Errorf("invalid token")

@@ -56,3 +56,12 @@ type KakaoMemberResponse struct {
 		ThumbnailImage string `json:"thumbnail_image"`
 	} `json:"properties"`
 }
+
+type MemberRequest struct {
+	Id          int       `json:"id"`
+	MemberId    int       `json:"memberId"`
+	Address     string    `json:"address"`
+	RegDate     time.Time `json:"regDate"`
+	ConfirmDate time.Time `json:"confirmDate"`
+	State       int       `json:"state"`
+}

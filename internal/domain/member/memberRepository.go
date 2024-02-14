@@ -3,11 +3,11 @@ package member
 import (
 	"backend/internal/db"
 	"backend/internal/models"
-	"backend/internal/utils/jwt"
 	"database/sql"
 	"fmt"
 	"log"
 	"reflect"
+	"time"
 )
 
 func FindByNameAndEmail(name string, email string) (models.Member, error) {
@@ -84,25 +84,35 @@ func InsertMember(member *models.Member) error {
 	return nil
 }
 
-func SaveAddress(id int, addr string) (string, error) {
-	tx, err := db.MyDb.Begin()
-	UpdateAddress := "UPDATE member SET address = ? WHERE id = ?"
-	_, err = tx.Exec(UpdateAddress, addr, id)
+func SaveAddress(id int, addr string) error {
+
+	query := "insert into member_request(member_id, address) VALUES (?,?)"
+	_, err := db.MyDb.Query(query, id, addr)
 	if err != nil {
-		tx.Rollback()
-		return "", fmt.Errorf("failed to update address: %v", err)
+		log.Println(err)
+		return err
 	}
 
-	token, err := jwt.AddressTokenProvider(id, addr)
-	if err != nil {
-		tx.Rollback()
-		return "", fmt.Errorf("failed to make addrToken: %v", err)
-	}
-	err = tx.Commit()
-	if err != nil {
-		return token, err
-	}
-	return token, nil
+	return nil
+
+	//tx, err := db.MyDb.Begin()
+	//UpdateAddress := "UPDATE member SET address = ? WHERE id = ?"
+	//_, err = tx.Exec(UpdateAddress, addr, id)
+	//if err != nil {
+	//	tx.Rollback()
+	//	return "", fmt.Errorf("failed to update address: %v", err)
+	//}
+	//
+	//token, err := jwt.AddressTokenProvider(id, addr)
+	//if err != nil {
+	//	tx.Rollback()
+	//	return "", fmt.Errorf("failed to make addrToken: %v", err)
+	//}
+	//err = tx.Commit()
+	//if err != nil {
+	//	return token, err
+	//}
+	//return token, nil
 }
 
 func DeleteMember(id int) error {
@@ -150,16 +160,13 @@ func findAllMembers(page int) ([]models.Member, error) {
 
 func findMemberById(id int) (models.Member, error) {
 	member := models.Member{}
-	s := reflect.ValueOf(&member).Elem()
-	numCols := s.NumField()
-	columns := make([]interface{}, numCols)
-	for i := 0; i < numCols; i++ {
-		field := s.Field(i)
-		columns[i] = field.Addr().Interface()
-	}
 
 	query := "SELECT * FROM member WHERE id=?"
-	err := db.MyDb.QueryRow(query, id).Scan(columns...)
+	var addr sql.NullString
+	err := db.MyDb.QueryRow(query, id).Scan(&member.ID, &member.Name, &member.Email, &addr, &member.RegDate)
+	if addr.Valid {
+		member.Address = addr.String
+	}
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return member, fmt.Errorf("member not found")
@@ -167,4 +174,66 @@ func findMemberById(id int) (models.Member, error) {
 		return member, err
 	}
 	return member, nil
+}
+
+func Confirm(id int, state int, memberId int, address string, authority string) error {
+
+	loc, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.MyDb.Begin()
+	if err != nil {
+		return err
+	}
+
+	confirmDate := time.Now().In(loc)
+
+	queryMemberRequest := "update member_request set state=?, confirm_date=? where id=?"
+	_, err = tx.Exec(queryMemberRequest, state, confirmDate, id)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	queryAuthorities := "insert into authorities(member_id, authority) VALUES (?,?)"
+	_, err = tx.Exec(queryAuthorities, memberId, authority)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	queryMember := "update member set address=? where id=?"
+	_, err = tx.Exec(queryMember, address, memberId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
+}
+
+func findReqByMemberIdAndAddress(memberId int, address string) (models.MemberRequest, error) {
+	result := models.MemberRequest{}
+	query := "select * from member_request where member_id = ? and address = ?"
+	var cDate sql.NullTime
+	err := db.MyDb.QueryRow(query, memberId, address).Scan(&result.Id, &result.MemberId, &result.Address, &result.RegDate, &cDate, &result.State)
+	if cDate.Valid {
+		result.RegDate = cDate.Time
+	}
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return models.MemberRequest{}, fmt.Errorf("Req not found")
+		}
+		return models.MemberRequest{}, err
+	}
+
+	return result, err
 }

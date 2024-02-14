@@ -33,7 +33,6 @@ func GetNotificationHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, notifications)
-
 }
 
 func PostNotificationHandler(c *gin.Context) {
@@ -59,7 +58,7 @@ func PostNotificationHandler(c *gin.Context) {
 
 }
 
-func PatchNotificationHandler(c *gin.Context) {
+func PutNotificationHandler(c *gin.Context) {
 	token := c.GetHeader("Authorization")
 	id, _, _, authorities, err := jwt.AccessTokenVerifier(token)
 	if err != nil {

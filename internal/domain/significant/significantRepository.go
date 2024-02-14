@@ -9,8 +9,8 @@ import (
 )
 
 func saveSignificant(input *models.Significant) error {
-	query := "Insert into significant(title, contents, author_id) VALUE (?,?,?)"
-	_, err := db.MyDb.Exec(query, input.Title, input.Contents, input.AuthorID)
+	query := "Insert into significant(contents, author_id, grade) VALUE (?,?,?)"
+	_, err := db.MyDb.Exec(query, input.Contents, input.AuthorID, input.Grade)
 	if err != nil {
 		return err
 	}
@@ -83,9 +83,9 @@ func findSignificantById(id int) (models.Significant, error) {
 }
 
 func updateSignificant(updateInfo *models.Significant, id int) error {
-	query := "UPDATE significant SET title=?, contents=?, update_date=NOW(), author_id=? WHERE id=?"
+	query := "UPDATE significant SET contents=?, update_date=NOW(), author_id=?, grade=? WHERE id=?"
 
-	_, err := db.MyDb.Exec(query, updateInfo.Title, updateInfo.Contents, id)
+	_, err := db.MyDb.Exec(query, updateInfo.Contents, updateInfo.AuthorID, updateInfo.Grade, id)
 	if err != nil {
 		return err
 	}

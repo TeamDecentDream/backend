@@ -75,12 +75,12 @@ func ConnectAddressHandler(c *gin.Context) {
 	}
 
 	addr := input["address"].(string)
-	token, err = SaveAddress(id, addr)
+	err = SaveAddress(id, addr)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"addrToken": token})
+	c.JSON(http.StatusOK, gin.H{})
 }
 
 func kakaoHandler(credential *models.Credential, c *gin.Context) {
@@ -157,4 +157,63 @@ func kakaoHandler(credential *models.Credential, c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"accessToken": accessToken})
+}
+
+func ConfirmHandler(c *gin.Context) {
+	var input map[string]interface{}
+	err := c.BindJSON(&input)
+	if err != nil || input["memberId"] == "" || input["address"] == "" || input["authority"] == "" {
+		log.Println(err, input["memberId"], input["address"], input["authority"])
+		c.JSON(http.StatusBadRequest, gin.H{})
+	}
+
+	err = Confirm(input["Id"].(int), input["state"].(int), input["memberId"].(int), input["address"].(string), input["authority"].(string))
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+func WalletCheckHandler(c *gin.Context) {
+	token := c.GetHeader("Authorization")
+	log.Println(token)
+	var input map[string]interface{}
+	err := c.BindJSON(&input)
+	id, _, _, _, err := jwt.AccessTokenVerifier(token)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		return
+	}
+	member, err := findMemberById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+	log.Println("member Addr = " + member.Address)
+	if member.Address == "" {
+		log.Println(input["addr"].(string))
+		_, err := findReqByMemberIdAndAddress(member.ID, input["addr"].(string))
+		if err != nil && strings.Contains(err.Error(), "Req not found") {
+			err = SaveAddress(id, input["addr"].(string))
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+				return
+			}
+		} else if err != nil {
+			log.Println(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"msg": "Send Request Success"})
+		return
+	}
+
+	if member.Address == input["addr"].(string) {
+		c.JSON(http.StatusOK, gin.H{})
+		return
+	}
+
 }
