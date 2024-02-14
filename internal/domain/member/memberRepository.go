@@ -22,7 +22,10 @@ func FindByNameAndEmail(name string, email string) (models.Member, error) {
 	defer rows.Close()
 
 	authorities := make([]models.Authority, 0)
+	found := false
+
 	for rows.Next() {
+		found = true
 		var memberID int
 		var role sql.NullString
 		var address sql.NullString
@@ -41,15 +44,11 @@ func FindByNameAndEmail(name string, email string) (models.Member, error) {
 			authorities = append(authorities, authority)
 		}
 	}
+	if !found {
+		return result, fmt.Errorf("member not found")
+	}
 
 	result.Authorities = authorities
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return result, fmt.Errorf("member not found")
-		}
-		return result, err
-	}
 
 	log.Println(result.ID, result.Name, result.Email, result.Address, result.RegDate, result.Authorities)
 	return result, nil
@@ -57,15 +56,18 @@ func FindByNameAndEmail(name string, email string) (models.Member, error) {
 
 func InsertMember(member *models.Member) error {
 	tx, err := db.MyDb.Begin()
+	log.Println("init")
 	queryMember := "INSERT INTO member (name, email) VALUES (?, ?)"
 	result, err := tx.Exec(queryMember, member.Name, member.Email)
 	if err != nil {
+		log.Println(err)
 		tx.Rollback()
 		return err
 	}
 
 	memberID, err := result.LastInsertId()
 	if err != nil {
+		log.Println(err)
 		tx.Rollback()
 		return err
 	}
@@ -73,11 +75,13 @@ func InsertMember(member *models.Member) error {
 	queryAuthority := "INSERT INTO authorities VALUES (?,?)"
 	result, err = tx.Exec(queryAuthority, memberID, "ROLE_GUEST")
 	if err != nil {
+		log.Println(err)
 		tx.Rollback()
 		return err
 	}
 	err = tx.Commit()
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
