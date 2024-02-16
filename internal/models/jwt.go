@@ -9,6 +9,7 @@ type Claims struct {
 	Name        string      `json:"name"`
 	Email       string      `json:"email"`
 	Provider    string      `json:"provider"`
+	Address     string      `json:"address"`
 	Authorities []Authority `json:"authorities"`
 	jwt.RegisteredClaims
 }

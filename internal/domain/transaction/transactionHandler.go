@@ -10,12 +10,13 @@ import (
 
 func DeleteTransactionHandler(c *gin.Context) {
 	var transactionId int
-	err := c.BindJSON(&transactionId)
-	if err != nil {
-		log.Println(err.Error())
+	_transactionId, flag := c.GetQuery("id")
+	if !flag {
 		c.JSON(http.StatusBadRequest, gin.H{"err": "Missing PostId"})
 		return
 	}
+	transactionId, err := strconv.Atoi(_transactionId)
+
 	err = DeleteTransaction(transactionId)
 	if err != nil {
 		log.Println(err.Error())

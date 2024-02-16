@@ -65,6 +65,7 @@ func setSignificantRoute(router *gin.Engine) {
 func setAttendanceRoute(router *gin.Engine) {
 	router.POST("/attendance/enter", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_GUEST", "ROLE_PRIME"}), attendance.EnterHandler)
 	router.POST("/attendance/leave", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_GUEST", "ROLE_PRIME"}), attendance.LeaveHandler)
+	router.GET("/attendance", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_GUEST", "ROLE_PRIME"}), attendance.GetWorkStateHandler)
 }
 
 func setEvaluationRoute(router *gin.Engine) {

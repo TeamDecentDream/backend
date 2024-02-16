@@ -151,6 +151,12 @@ func kakaoHandler(credential *models.Credential, c *gin.Context) {
 			return
 		}
 	}
+
+	if result.Address != credential.Address {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Address is not Correct"})
+		return
+	}
+
 	accessToken, err := jwt.AccessTokenProvider(&result)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

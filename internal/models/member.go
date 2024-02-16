@@ -19,6 +19,7 @@ type Authority struct {
 type Credential struct {
 	Provider string `json:"provider"`
 	Code     string `json:"code"`
+	Address  string `json:"address"`
 }
 
 type KakaoOAuthResponse struct {

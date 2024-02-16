@@ -8,5 +8,6 @@ type Transaction struct {
 	Amount  int       `json:"amount"`
 	Client  string    `json:"client"`
 	SellBuy int       `json:"sell_buy"`
+	State   int       `json:"state"`
 	RegDate time.Time `json:"reg_date"`
 }

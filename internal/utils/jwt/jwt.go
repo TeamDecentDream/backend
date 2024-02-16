@@ -18,6 +18,7 @@ func AccessTokenProvider(member *models.Member) (string, error) {
 	claims.Name = member.Name
 	claims.Email = member.Email
 	claims.Authorities = member.Authorities
+	claims.Address = member.Address
 	claims.RegisteredClaims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(2 * time.Hour))
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
