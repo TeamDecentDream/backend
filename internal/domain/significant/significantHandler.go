@@ -4,8 +4,10 @@ import (
 	"backend/internal/models"
 	"backend/internal/utils/jwt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func GetSignificantCountHandler(c *gin.Context) {
@@ -58,7 +60,7 @@ func PostSignificantHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-func PatchSignificantHandler(c *gin.Context) {
+func PutSignificantHandler(c *gin.Context) {
 	token := c.GetHeader("Authorization")
 	id, _, _, authorities, err := jwt.AccessTokenVerifier(token)
 	if err != nil {
@@ -66,7 +68,7 @@ func PatchSignificantHandler(c *gin.Context) {
 		return
 	}
 
-	var inputSignificant models.Significant
+	var inputSignificant models.SignificantOutput
 	err = c.BindJSON(&inputSignificant)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Input Value Error"})
@@ -78,6 +80,7 @@ func PatchSignificantHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
+	log.Println(existingSignificant)
 	flag := false
 Loop1:
 	for _, authority := range authorities {
@@ -86,8 +89,20 @@ Loop1:
 			break Loop1
 		}
 	}
-	if existingSignificant.AuthorID == id || flag {
-		err = updateSignificant(&inputSignificant, id)
+
+	if id == existingSignificant.AuthorID || flag {
+		loc, err := time.LoadLocation("Asia/Seoul")
+		updateTime := time.Now().In(loc)
+
+		significant := models.Significant{
+			ID:         inputSignificant.ID,
+			Contents:   inputSignificant.Contents,
+			Warn:       inputSignificant.Warn,
+			AuthorID:   id,
+			RegDate:    inputSignificant.RegDate,
+			UpdateDate: updateTime,
+		}
+		err = updateSignificant(&significant)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
@@ -96,7 +111,6 @@ Loop1:
 		return
 	}
 	c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-
 }
 
 func DeleteSignificantHandler(c *gin.Context) {

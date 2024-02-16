@@ -9,8 +9,8 @@ import (
 )
 
 func saveSignificant(input *models.Significant) error {
-	query := "Insert into significant(contents, author_id, grade) VALUE (?,?,?)"
-	_, err := db.MyDb.Exec(query, input.Contents, input.AuthorID, input.Grade)
+	query := "Insert into significant(contents, author_id) VALUE (?,?)"
+	_, err := db.MyDb.Exec(query, input.Contents, input.AuthorID)
 	if err != nil {
 		return err
 	}
@@ -27,33 +27,26 @@ func GetSignificantCount() (int, error) {
 	return count, err
 }
 
-func getSignificants(page int) ([]models.Significant, error) {
+func getSignificants(page int) ([]models.SignificantOutput, error) {
 	pageSize := 20
 	offset := (page - 1) * pageSize
 
-	query := "SELECT * FROM significant LIMIT ? OFFSET ?"
+	query := "SELECT s.id, s.contents, m.name, s.warn ,s.reg_date,s.update_date FROM significant s join nextfarm.member m on m.id = s.author_id order by s.update_date desc LIMIT ? OFFSET ?"
 	rows, err := db.MyDb.Query(query, pageSize, offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var significants []models.Significant
+	var significants []models.SignificantOutput
 
 	for rows.Next() {
-		significant := models.Significant{}
-		s := reflect.ValueOf(&significant).Elem()
-		numCols := s.NumField()
-		columns := make([]interface{}, numCols)
-		for i := 0; i < numCols; i++ {
-			field := s.Field(i)
-			columns[i] = field.Addr().Interface()
-		}
-		err := rows.Scan(columns...)
+		s := models.SignificantOutput{}
+		err := rows.Scan(&s.ID, &s.Contents, &s.AuthorID, &s.Warn, &s.RegDate, &s.UpdateDate)
 		if err != nil {
 			return nil, err
 		}
-		significants = append(significants, significant)
+		significants = append(significants, s)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -82,10 +75,10 @@ func findSignificantById(id int) (models.Significant, error) {
 	return significant, nil
 }
 
-func updateSignificant(updateInfo *models.Significant, id int) error {
-	query := "UPDATE significant SET contents=?, update_date=NOW(), author_id=?, grade=? WHERE id=?"
+func updateSignificant(updateInfo *models.Significant) error {
+	query := "UPDATE significant SET contents=?, update_date=NOW(), author_id=?, warn=? WHERE id=?"
 
-	_, err := db.MyDb.Exec(query, updateInfo.Contents, updateInfo.AuthorID, updateInfo.Grade, id)
+	_, err := db.MyDb.Exec(query, updateInfo.Contents, updateInfo.AuthorID, updateInfo.Warn, updateInfo.ID)
 	if err != nil {
 		return err
 	}

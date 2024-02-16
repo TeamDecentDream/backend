@@ -58,7 +58,7 @@ func setSignificantRoute(router *gin.Engine) {
 	router.GET("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), significant.GetSignificantHandler)
 	router.GET("/significant/count", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), significant.GetSignificantCountHandler)
 	router.POST("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), significant.PostSignificantHandler)
-	router.PUT("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), significant.PatchSignificantHandler)
+	router.PUT("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), significant.PutSignificantHandler)
 	router.DELETE("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_WORKER", "ROLE_PRIME"}), significant.DeleteSignificantHandler)
 }
 

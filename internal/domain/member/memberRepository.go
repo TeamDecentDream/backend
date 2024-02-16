@@ -162,7 +162,7 @@ func findAllMembers(page int) ([]models.Member, error) {
 	return members, nil
 }
 
-func findMemberById(id int) (models.Member, error) {
+func FindMemberById(id int) (models.Member, error) {
 	member := models.Member{}
 
 	query := "SELECT * FROM member WHERE id=?"

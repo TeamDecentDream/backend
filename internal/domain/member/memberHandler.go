@@ -30,7 +30,7 @@ func GetMemberDetailHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	member, err := findMemberById(id)
+	member, err := FindMemberById(id)
 	c.JSON(http.StatusOK, member)
 }
 
@@ -193,7 +193,7 @@ func WalletCheckHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}
-	member, err := findMemberById(id)
+	member, err := FindMemberById(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
