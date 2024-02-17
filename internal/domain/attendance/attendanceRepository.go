@@ -2,6 +2,7 @@ package attendance
 
 import (
 	"backend/internal/db"
+	"backend/internal/models"
 	"database/sql"
 	"time"
 )
@@ -15,16 +16,17 @@ func GetWorkState(memberId int) (*time.Time, error) {
 	today := time.Now().In(loc).Format("2006-01-02")
 	query := "SELECT * FROM attendance WHERE member_id = ? AND DATE(enter_time) = ? AND leave_time is null order by enter_time desc"
 
-	var enterTime time.Time
-	err = db.MyDb.QueryRow(query, memberId, today).Scan(&enterTime)
+	var enterLog models.Attendance
+	var leavTime sql.NullTime
+	err = db.MyDb.QueryRow(query, memberId, today).Scan(&enterLog.Id, &enterLog.MemberId, &enterLog.EnterTime, &leavTime)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return &enterTime, sql.ErrNoRows
+			return &enterLog.EnterTime, sql.ErrNoRows
 		}
-		return &enterTime, err
+		return &enterLog.EnterTime, err
 	}
 
-	return &enterTime, nil
+	return &enterLog.EnterTime, nil
 }
 
 func enter(memberId int) (*time.Time, error) {

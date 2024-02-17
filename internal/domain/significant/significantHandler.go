@@ -115,13 +115,12 @@ Loop1:
 
 func DeleteSignificantHandler(c *gin.Context) {
 	token := c.GetHeader("Authorization")
-	var SId string
-	err := c.BindJSON(&SId)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+	_id, flag := c.GetQuery("id")
+	if !flag {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "bad Request"})
 		return
 	}
-	_SId, err := strconv.Atoi(SId)
+	_SId, err := strconv.Atoi(_id)
 	id, _, _, authorities, err := jwt.AccessTokenVerifier(token)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Authorization Code Error"})

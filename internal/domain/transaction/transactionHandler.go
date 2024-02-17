@@ -20,6 +20,7 @@ func DeleteTransactionHandler(c *gin.Context) {
 	err = DeleteTransaction(transactionId)
 	if err != nil {
 		log.Println(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{})

@@ -92,6 +92,7 @@ create table todo(
                      contents varchar(1000) not null,
                      state int default 0,
                      reg_date datetime default current_timestamp,
+                     update_date datetime,
                      primary key (id),
                      foreign key (author_id) references member(id) ON DELETE CASCADE
 );

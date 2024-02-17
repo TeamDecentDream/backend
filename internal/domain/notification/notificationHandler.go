@@ -100,14 +100,14 @@ Loop1:
 
 func DeleteNotificationHandler(c *gin.Context) {
 	token := c.GetHeader("Authorization")
-	var NId string
-	err := c.BindJSON(&NId)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+	_id, flag := c.GetQuery("id")
+	if !flag {
+		c.JSON(http.StatusBadRequest, gin.H{"err": "Missing PostId"})
 		return
 	}
-	_SId, err := strconv.Atoi(NId)
-	id, _, _, authorities, err := jwt.AccessTokenVerifier(token)
+	id, err := strconv.Atoi(_id)
+
+	Authorid, _, _, authorities, err := jwt.AccessTokenVerifier(token)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Authorization Code Error"})
 		return
@@ -115,11 +115,11 @@ func DeleteNotificationHandler(c *gin.Context) {
 
 	for _, authority := range authorities {
 		if "ROLE_ADMIN" == authority.Role {
-			_ = DeleteNotificationByAdmin(_SId)
+			_ = DeleteNotificationByAdmin(id)
 			c.JSON(http.StatusOK, gin.H{})
 			return
 		}
 	}
-	_ = DeleteNotification(_SId, id)
+	_ = DeleteNotification(id, Authorid)
 	c.JSON(http.StatusOK, gin.H{})
 }

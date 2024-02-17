@@ -38,7 +38,6 @@ func GetWorkStateHandler(c *gin.Context) {
 	timeLog, err := GetWorkState(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// 조회된 결과가 없는 경우
 			c.JSON(http.StatusOK, gin.H{})
 			return
 		}

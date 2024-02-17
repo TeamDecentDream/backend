@@ -6,6 +6,7 @@ import (
 	"backend/internal/domain/member"
 	"backend/internal/domain/notification"
 	"backend/internal/domain/significant"
+	"backend/internal/domain/todo"
 	"backend/internal/domain/transaction"
 	"backend/internal/middleware"
 	"github.com/gin-contrib/cors"
@@ -33,6 +34,7 @@ func SetRouter() *gin.Engine {
 	setAttendanceRoute(router)
 	setEvaluationRoute(router)
 	setTransactionRoute(router)
+	setTodoRoute(router)
 	return router
 }
 
@@ -80,4 +82,11 @@ func setTransactionRoute(router *gin.Engine) {
 	router.GET("/transaction/count", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), transaction.GetTransactionCountHandler)
 	router.PUT("/transaction", middleware.AuthMiddleware([]string{"ROLE_ADMIN"}), transaction.PutTransactionHandler)
 	router.DELETE("/transaction", middleware.AuthMiddleware([]string{"ROLE_ADMIN"}), transaction.DeleteTransactionHandler)
+}
+
+func setTodoRoute(router *gin.Engine) {
+	router.GET("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_WORKER", "ROLE_PRIME"}), todo.GetTodoHandler)
+	router.POST("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_WORKER", "ROLE_PRIME"}), todo.PostTodoHandler)
+	router.PUT("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_WORKER", "ROLE_PRIME"}), todo.PUTTodoHandler)
+	router.DELETE("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_WORKER", "ROLE_PRIME"}), todo.DeleteTodoHandler)
 }
