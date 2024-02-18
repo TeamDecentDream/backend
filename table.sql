@@ -114,5 +114,5 @@ create table todo(
 # drop table authorities;
 # drop table notification;
 # drop table member_request;
-# drop table member;
 # drop table todo;
+# drop table member;

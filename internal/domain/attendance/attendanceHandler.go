@@ -54,3 +54,15 @@ func GetWorkStateHandler(c *gin.Context) {
 	})
 
 }
+
+func GetWorkLogHandler(c *gin.Context) {
+	token := c.GetHeader("Authorization")
+	id, _, _, _, _ := jwt.AccessTokenVerifier(token)
+	timeLogs, err := GetWorkTimeLog(id)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"timeLogs": timeLogs})
+}

@@ -39,13 +39,13 @@ func SetRouter() *gin.Engine {
 }
 
 func setMemberRoute(router *gin.Engine) {
-	router.GET("/member", middleware.AuthMiddleware([]string{"ROLE_ADMIN"}), member.GetAllMembersHandler)
+	router.GET("/member", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_PRIME"}), member.GetAllMembersHandler)
 	router.GET("/member/details", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}), member.GetMemberDetailHandler)
+	router.GET("/member/count", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_PRIME"}), member.GetMemberCountHandler)
 	router.POST("/member/login", member.LoginHandler)
-	router.POST("/member/confirm", middleware.AuthMiddleware([]string{"ROLE_ADMIN"}), member.ConfirmHandler)
+	router.PUT("/member/confirm", middleware.AuthMiddleware([]string{"ROLE_ADMIN"}), member.ConfirmHandler)
 	router.DELETE("/member", member.DeleteMemberHandler)
 	router.POST("/member/address", member.ConnectAddressHandler)
-	router.POST("/member/wallet", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_GUEST", "ROLE_PRIME"}), member.WalletCheckHandler)
 }
 
 func setNotificationRoute(router *gin.Engine) {
@@ -68,10 +68,11 @@ func setAttendanceRoute(router *gin.Engine) {
 	router.POST("/attendance/enter", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_GUEST", "ROLE_PRIME"}), attendance.EnterHandler)
 	router.POST("/attendance/leave", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_GUEST", "ROLE_PRIME"}), attendance.LeaveHandler)
 	router.GET("/attendance", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_GUEST", "ROLE_PRIME"}), attendance.GetWorkStateHandler)
+	router.GET("/attendance/timelogs", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_GUEST", "ROLE_PRIME"}), attendance.GetWorkLogHandler)
 }
 
 func setEvaluationRoute(router *gin.Engine) {
-	router.POST("/evaluate", middleware.AuthMiddleware([]string{"ROLE_PRIME"}), evaluation.EvaluateHandler)
+	router.POST("/evaluate", middleware.AuthMiddleware([]string{"ROLE_PRIME"}), evaluation.PostEvaluateHandler)
 	router.GET("/evaluate", middleware.AuthMiddleware([]string{"ROLE_PRIME", "ROLE_ADMIN"}), evaluation.GetEvaluationHandler)
 	router.DELETE("/evaluate", middleware.AuthMiddleware([]string{"ROLE_PRIME", "ROLE_ADMIN"}), evaluation.DeleteEvaluationHandler)
 }

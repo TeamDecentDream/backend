@@ -17,6 +17,7 @@ func GetAllMembersHandler(c *gin.Context) {
 	_page, _ := strconv.Atoi(page)
 	members, err := findAllMembers(_page)
 	if err != nil {
+		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -141,18 +142,25 @@ func kakaoHandler(credential *models.Credential, c *gin.Context) {
 			var newMember models.Member
 			newMember.Name = userInfo.Properties.Nickname
 			newMember.Email = userInfo.KakaoAccount.Email
-			err := InsertMember(&newMember)
+			err := InsertMember(&newMember, credential.Address)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
+			c.JSON(http.StatusOK, gin.H{"msg": "가입 신청 성공"})
+			return
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
-
+	log.Println("resultAddress=", result.Address)
+	log.Println("credential.Address=", credential.Address)
 	if result.Address != credential.Address {
+		if result.Address == "" {
+			c.JSON(http.StatusOK, gin.H{"msg": "가입 승인 대기 중"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Address is not Correct"})
 		return
 	}
@@ -166,16 +174,16 @@ func kakaoHandler(credential *models.Credential, c *gin.Context) {
 }
 
 func ConfirmHandler(c *gin.Context) {
-	var input map[string]interface{}
+	var input models.Confirm
 	err := c.BindJSON(&input)
-	if err != nil || input["memberId"] == "" || input["address"] == "" || input["authority"] == "" {
-		log.Println(err, input["memberId"], input["address"], input["authority"])
+	if err != nil {
+		log.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 	}
 
-	err = Confirm(input["Id"].(int), input["state"].(int), input["memberId"].(int), input["address"].(string), input["authority"].(string))
+	err = Confirm(input.Id, input.State, input.MemberId, input.Address, input.Authority)
 	if err != nil {
-		log.Println(err)
+		log.Println(err, input.Id, input.State, input.MemberId, input.Address, input.Authority)
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
 		return
 	}
@@ -222,4 +230,12 @@ func WalletCheckHandler(c *gin.Context) {
 		return
 	}
 
+}
+
+func GetMemberCountHandler(c *gin.Context) {
+	count, err := GetMemberCount()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+	}
+	c.JSON(http.StatusOK, gin.H{"count": count})
 }

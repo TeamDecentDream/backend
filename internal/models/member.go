@@ -66,3 +66,23 @@ type MemberRequest struct {
 	ConfirmDate time.Time `json:"confirmDate"`
 	State       int       `json:"state"`
 }
+
+type MemberRequestOutput struct {
+	RequestID          int         `json:"id"`
+	MemberName         string      `json:"name"`
+	MemberEmail        string      `json:"email"`
+	MemberId           int         `json:"memberId"`
+	Authorities        []Authority `json:"authorities"`
+	RequestAddress     string      `json:"address"`
+	RequestState       int         `json:"state"`
+	MemberRegDate      string      `json:"regDate"`
+	RequestConfirmDate string      `json:"confirmDate"`
+}
+
+type Confirm struct {
+	Id        int    `json:"id"`
+	MemberId  int    `json:"memberId"`
+	Address   string `json:"address"`
+	State     int    `json:"state"`
+	Authority string `json:"authority"`
+}

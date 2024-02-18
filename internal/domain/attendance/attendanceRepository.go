@@ -62,3 +62,32 @@ func leave(memberId int) error {
 	}
 	return nil
 }
+
+func GetWorkTimeLog(memberId int) ([]models.Attendance, error) {
+	query := "select * from attendance where member_id=? order by enter_time desc limit 5"
+
+	rows, err := db.MyDb.Query(query, memberId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var attendances []models.Attendance
+	for rows.Next() {
+		var attendance models.Attendance
+		var leaveTime sql.NullTime
+		err := rows.Scan(&attendance.Id, &attendance.MemberId, &attendance.EnterTime, &leaveTime)
+		if err != nil {
+			return nil, err
+		}
+		if leaveTime.Valid {
+			attendance.LeaveTime = leaveTime.Time
+		}
+		attendances = append(attendances, attendance)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return attendances, nil
+}

@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"reflect"
 	"time"
 )
 
@@ -34,7 +33,7 @@ func FindByNameAndEmail(name string, email string) (models.Member, error) {
 			return result, err
 		}
 
-		if address.Valid && result.Address != "" {
+		if address.Valid {
 			result.Address = address.String
 		}
 
@@ -54,7 +53,7 @@ func FindByNameAndEmail(name string, email string) (models.Member, error) {
 	return result, nil
 }
 
-func InsertMember(member *models.Member) error {
+func InsertMember(member *models.Member, address string) error {
 	tx, err := db.MyDb.Begin()
 	log.Println("init")
 	queryMember := "INSERT INTO member (name, email) VALUES (?, ?)"
@@ -79,6 +78,14 @@ func InsertMember(member *models.Member) error {
 		tx.Rollback()
 		return err
 	}
+
+	queryRequest := "insert into member_request(member_id, address) VALUES (?,?)"
+	_, err = tx.Exec(queryRequest, memberID, address)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		log.Println(err)
@@ -128,38 +135,91 @@ func DeleteMember(id int) error {
 	return nil
 }
 
-func findAllMembers(page int) ([]models.Member, error) {
-	pageSize := 20
+func findAllMembers(page int) ([]models.MemberRequestOutput, error) {
+	pageSize := 10
 	offset := (page - 1) * pageSize
+	query := `
+		SELECT 
+			mr.id AS request_id,
+			m.name AS member_name,
+			m.email AS member_email,
+			m.id AS member_id,
+			mr.address AS request_address,
+			mr.state AS request_state,
+			m.reg_date AS member_reg_date,
+			mr.confirm_date AS request_confirm_date,
+			a.authority AS authority_role
+		FROM 
+			member_request mr
+		JOIN 
+			member m ON mr.member_id = m.id
+		LEFT JOIN 
+			authorities a ON m.id = a.member_id
+		limit ? offset ?
+	`
 
-	query := "SELECT * FROM member LIMIT ? OFFSET ?"
 	rows, err := db.MyDb.Query(query, pageSize, offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var members []models.Member
-
+	memberRequestsMap := make(map[int]*models.MemberRequestOutput)
 	for rows.Next() {
-		member := models.Member{}
-		s := reflect.ValueOf(&member).Elem()
-		numCols := s.NumField()
-		columns := make([]interface{}, numCols)
-		for i := 0; i < numCols; i++ {
-			field := s.Field(i)
-			columns[i] = field.Addr().Interface()
-		}
-		err := rows.Scan(columns...)
+		var (
+			requestID          int
+			memberName         string
+			memberEmail        string
+			memberId           int
+			requestAddress     string
+			requestState       int
+			memberRegDate      time.Time
+			requestConfirmDate time.Time
+			authorityRole      sql.NullString
+		)
+		err := rows.Scan(
+			&requestID,
+			&memberName,
+			&memberEmail,
+			&memberId,
+			&requestAddress,
+			&requestState,
+			&memberRegDate,
+			&requestConfirmDate,
+			&authorityRole,
+		)
 		if err != nil {
 			return nil, err
 		}
-		members = append(members, member)
+
+		if memberRequest, ok := memberRequestsMap[requestID]; ok {
+			if authorityRole.Valid {
+				memberRequest.Authorities = append(memberRequest.Authorities, models.Authority{Role: authorityRole.String})
+			}
+		} else {
+			memberRequestsMap[requestID] = &models.MemberRequestOutput{
+				RequestID:          requestID,
+				MemberName:         memberName,
+				MemberEmail:        memberEmail,
+				MemberId:           memberId,
+				RequestAddress:     requestAddress,
+				RequestState:       requestState,
+				MemberRegDate:      memberRegDate.Format("2006-01-02"),
+				RequestConfirmDate: requestConfirmDate.Format("2006-01-02"),
+				Authorities:        make([]models.Authority, 0),
+			}
+			if authorityRole.Valid {
+				memberRequestsMap[requestID].Authorities = append(memberRequestsMap[requestID].Authorities, models.Authority{Role: authorityRole.String})
+			}
+		}
 	}
-	if err := rows.Err(); err != nil {
-		return nil, err
+
+	memberRequests := make([]models.MemberRequestOutput, 0, len(memberRequestsMap))
+	for _, memberRequest := range memberRequestsMap {
+		memberRequests = append(memberRequests, *memberRequest)
 	}
-	return members, nil
+
+	return memberRequests, nil
 }
 
 func FindMemberById(id int) (models.Member, error) {
@@ -196,6 +256,13 @@ func Confirm(id int, state int, memberId int, address string, authority string) 
 
 	queryMemberRequest := "update member_request set state=?, confirm_date=? where id=?"
 	_, err = tx.Exec(queryMemberRequest, state, confirmDate, id)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	queryAuthoritiesPrev := "delete from authorities where member_id=?"
+	_, err = tx.Exec(queryAuthoritiesPrev, memberId)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -240,4 +307,14 @@ func findReqByMemberIdAndAddress(memberId int, address string) (models.MemberReq
 	}
 
 	return result, err
+}
+
+func GetMemberCount() (int, error) {
+	query := "select count(*) from member"
+	var count int
+	err := db.MyDb.QueryRow(query).Scan(&count)
+	if err != nil {
+		return -1, err
+	}
+	return count, err
 }
