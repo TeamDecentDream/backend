@@ -16,21 +16,21 @@ func GetTodoHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Authorization Code Error"})
 		return
 	}
-	var dateRange models.DateRange
-	err = c.BindJSON(&dateRange)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Params Error"})
+	timeRange, flag := c.GetQuery("timeRange")
+	if !flag {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing Params"})
 		return
 	}
-	Todos, err := getTodos(&dateRange, id)
+
+	Todos, err := getTodos(timeRange, id)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"todos": Todos})
-
 }
+
 func PostTodoHandler(c *gin.Context) {
 	token := c.GetHeader("Authorization")
 	id, _, _, _, err := jwt.AccessTokenVerifier(token)

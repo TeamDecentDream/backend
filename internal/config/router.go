@@ -61,14 +61,14 @@ func setSignificantRoute(router *gin.Engine) {
 	router.GET("/significant/count", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), significant.GetSignificantCountHandler)
 	router.POST("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), significant.PostSignificantHandler)
 	router.PUT("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), significant.PutSignificantHandler)
-	router.DELETE("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_WORKER", "ROLE_PRIME"}), significant.DeleteSignificantHandler)
+	router.DELETE("/significant", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), significant.DeleteSignificantHandler)
 }
 
 func setAttendanceRoute(router *gin.Engine) {
-	router.POST("/attendance/enter", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_GUEST", "ROLE_PRIME"}), attendance.EnterHandler)
-	router.POST("/attendance/leave", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_GUEST", "ROLE_PRIME"}), attendance.LeaveHandler)
-	router.GET("/attendance", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_GUEST", "ROLE_PRIME"}), attendance.GetWorkStateHandler)
-	router.GET("/attendance/timelogs", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_GUEST", "ROLE_PRIME"}), attendance.GetWorkLogHandler)
+	router.POST("/attendance/enter", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), attendance.EnterHandler)
+	router.POST("/attendance/leave", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), attendance.LeaveHandler)
+	router.GET("/attendance", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), attendance.GetWorkStateHandler)
+	router.GET("/attendance/timelogs", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), attendance.GetWorkLogHandler)
 }
 
 func setEvaluationRoute(router *gin.Engine) {
@@ -86,8 +86,8 @@ func setTransactionRoute(router *gin.Engine) {
 }
 
 func setTodoRoute(router *gin.Engine) {
-	router.GET("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_WORKER", "ROLE_PRIME"}), todo.GetTodoHandler)
-	router.POST("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_WORKER", "ROLE_PRIME"}), todo.PostTodoHandler)
-	router.PUT("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_WORKER", "ROLE_PRIME"}), todo.PUTTodoHandler)
-	router.DELETE("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROL_WORKER", "ROLE_PRIME"}), todo.DeleteTodoHandler)
+	router.GET("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), todo.GetTodoHandler)
+	router.POST("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), todo.PostTodoHandler)
+	router.PUT("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), todo.PUTTodoHandler)
+	router.DELETE("/todo", middleware.AuthMiddleware([]string{"ROLE_ADMIN", "ROLE_WORKER", "ROLE_PRIME"}), todo.DeleteTodoHandler)
 }

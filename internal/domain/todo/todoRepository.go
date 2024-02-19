@@ -3,6 +3,7 @@ package todo
 import (
 	"backend/internal/db"
 	"backend/internal/models"
+	"database/sql"
 	"time"
 )
 
@@ -38,11 +39,16 @@ func deleteTodo(id int, authorId int) error {
 	return nil
 }
 
-func getTodos(dateRange *models.DateRange, id int) ([]models.Todo, error) {
-	end := dateRange.End.AddDate(0, 0, 1)
+func getTodos(dateRange string, id int) ([]models.Todo, error) {
+	layout := "2006-01"
+	start, err := time.Parse(layout, dateRange)
+	if err != nil {
+		return nil, err
+	}
+	end := start.AddDate(0, 1, 0)
 
 	query := "SELECT * FROM todo WHERE reg_date >= ? AND reg_date < ? AND author_id=?"
-	rows, err := db.MyDb.Query(query, dateRange.Start, end)
+	rows, err := db.MyDb.Query(query, start, end, id)
 	if err != nil {
 		return nil, err
 	}
@@ -51,11 +57,16 @@ func getTodos(dateRange *models.DateRange, id int) ([]models.Todo, error) {
 	var todos []models.Todo
 	for rows.Next() {
 		var todo models.Todo
-		err := rows.Scan(&todo.Id, &todo.AuthorId, &todo.Contents, &todo.State, &todo.RegDate, &todo.UpdateDate)
+		var _update_date sql.NullTime
+		err := rows.Scan(&todo.Id, &todo.AuthorId, &todo.Contents, &todo.State, &todo.RegDate, &_update_date)
 		if err != nil {
 			return nil, err
 		}
+		if _update_date.Valid {
+			todo.UpdateDate = _update_date.Time
+		}
 		todos = append(todos, todo)
+
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
