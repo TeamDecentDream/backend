@@ -8,9 +8,9 @@ import (
 )
 
 func saveTodo(todo *models.Todo, id int) error {
-	query := "insert into todo(author_id,contents) VALUES (?,?)"
+	query := "insert into todo(author_id,contents,reg_date) VALUES (?,?,?)"
 
-	_, err := db.MyDb.Exec(query, id, todo.Contents)
+	_, err := db.MyDb.Exec(query, id, todo.Contents, todo.RegDate)
 	if err != nil {
 		return err
 	}
