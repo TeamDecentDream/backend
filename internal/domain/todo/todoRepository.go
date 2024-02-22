@@ -47,7 +47,7 @@ func getTodos(dateRange string, id int) ([]models.Todo, error) {
 	}
 	end := start.AddDate(0, 1, 0)
 
-	query := "SELECT * FROM todo WHERE reg_date >= ? AND reg_date < ? AND author_id=?"
+	query := "SELECT * FROM todo WHERE reg_date >= ? AND reg_date < ? AND author_id=? order by reg_date asc "
 	rows, err := db.MyDb.Query(query, start, end, id)
 	if err != nil {
 		return nil, err
