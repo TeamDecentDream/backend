@@ -22,3 +22,5 @@
 go.work
 ignores
 .idea
+./internal/contract/node_modules
+./internal/contract/build
