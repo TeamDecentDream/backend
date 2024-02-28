@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func loadContract(address_ string) {
+func LoadContract(address_ string) {
 	privateKey, err := crypto.HexToECDSA("프라이빗키~")
 	if err != nil {
 		log.Fatal(err)

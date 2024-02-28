@@ -2,6 +2,7 @@ package main
 
 import (
 	"backend/internal/config"
+	"backend/internal/contract"
 	"backend/internal/db"
 	"log"
 )
@@ -12,10 +13,11 @@ func main() {
 		log.Fatal("DB Connecting Error")
 	}
 
-	//err = config.SetEthSepoliaNet()
-	//if err != nil {
-	//	log.Fatal("Sepolia Error")
-	//}
+	err = config.SetEthSepoliaNet()
+	if err != nil {
+		log.Fatal("Sepolia Error")
+	}
+	contract.LoadContract("NZF TOKEN ADDRESS!!")
 
 	router := config.SetRouter()
 	err = router.Run(":8080")
