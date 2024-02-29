@@ -17,7 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Sepolia Error")
 	}
-	contract.LoadContract("NZF TOKEN ADDRESS!!")
+	go contract.LoadContract("NZF TOKEN ADDRESS!!")
 
 	router := config.SetRouter()
 	err = router.Run(":8080")
